@@ -50,3 +50,4 @@ app = rx.App(
 )
 
 app.add_page(index)
+

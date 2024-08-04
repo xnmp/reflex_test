@@ -3,6 +3,7 @@ from typing import List, Any
 import random
 import string
 
+# this is all actually already pre-made with rx.ComponentState
 
 # TODO: guarantee uniqueness here by using a counter
 def generate_random_classname(length=10):
@@ -39,7 +40,8 @@ class StateMeta(type):
 
         original_init = attrs.get('__init__', lambda self: None)
         def new_init(self, *args, **kwargs):
-            state_class_name = generate_random_classname()
+            state_class_name = self.__class__.__name__ + '_' + generate_random_classname()
+            # print("State class name:", state_class_name)
             StateClass = type(state_class_name, (rx.State,), state_attrs)
             self._state = StateClass
             original_init(self, *args, **kwargs)
@@ -63,3 +65,27 @@ class Stateful(metaclass=StateMeta):
         else:
             super().__setattr__(name, value)
 
+
+# # example usage:
+# class Dropdown(Stateful):
+
+#     @state
+#     def selected_option(self):
+#         return 'tg'
+    
+#     @state_change
+#     def handle_change(self, values):
+#         print("Values:", values, type(values))
+#         self.selected_option = [el['value'] for el in values]
+        
+#     def __init__(self, options):
+#         self.options = options
+    
+#     @property
+#     def element(self):
+#         return MultiSelect.create(
+#             options=self.options,
+#             is_multi=True,
+#             on_change=self.handle_change,
+#             placeholder="Select an option..."
+#         )
