@@ -4,59 +4,83 @@ import pandas as pd
 from typing import List, Dict, Any
 
 from .components.multi_select import MultiSelect
-from .core.statefulness import StateMeta, Stateful, state, state_change
+from .core.statefulness import Stateful, state, state_change
 
 
-class Dropdown(rx.ComponentState):
+class Dropdown(Stateful):
+
+    @state
+    def selected_option(self):
+        return 'tg'
     
-    selected_option: List[str] = ['tg']
-    
+    @state_change
     def handle_change(self, values):
-        print("Values:", values, type(values))
-        self.selected_option = [el['value'] for el in values]
+        print("Values:", values, type(values), self.name, type(self))
+        self.selected_option = [self.name + '-' + el['value'] for el in values]
+        
+        # can't do this...
+        # Filters.filters[self.name] = [el['value'] for el in values]
+        # print("===\n", Filters.update_filters(self.name, self.selected_option))
+        
+    def __init__(self, name, options):
+        self.name = name
+        self.options = options
     
-    @classmethod
-    def get_component(cls, *children, **props) -> rx.Component:
+    @property
+    def element(self):
         return MultiSelect.create(
-            options=props.pop('options'),
+            options=self.options,
             is_multi=True,
-            on_change=cls.handle_change,
+            on_change=self.handle_change,
             placeholder="Select an option..."
         )
 
 
-options_flavour = [
+
+options ={
+    'flavor': [
         {"value": "chocolate", "label": "Chocolate"},
         {"value": "strawberry", "label": "Strawberry"},
         {"value": "vanilla", "label": "Vanilla"}
+    ],
+    'color': [
+        {"value": "green", "label": "Green"},
+        {"value": "red", "label": "Red"},
+        {"value": "blue", "label": "Blue"}
     ]
-flavour_dropdown = Dropdown.create(options=options_flavour)
+}
 
-options_color = [
-    {"value": "green", "label": "Green"},
-    {"value": "red", "label": "Red"},
-    {"value": "blue", "label": "Blue"}
-]
-color_dropdown = Dropdown.create(options=options_color)
+dropdowns = {name: Dropdown(name, options=options[name]) for name in options}
 
 
+class Filters(rx.State):
+    
+    filters: Dict[str, Any] = {}
+    df: pd.DataFrame = pd.DataFrame()
+    
+    # really want to be able to add @rx.cached_var here but can't
+    async def update_filters(self):
+        states = {name: await self.get_state(dropdown.State) for name, dropdown in dropdowns.items()}
+        self.filters = {k: v.selected_option[0] for k, v in states.items()}
+        self.df = pd.DataFrame(self.filters, index=[0])
 
 
-def dropdowns():
+def dropdown_elements():
 
-    # table = rx.data_table(
-    #     data=component_df.df,
-    #     pagination=True,
-    #     search=True,
-    #     sort=True,
-    # )
+    table = rx.data_table(
+        data=Filters.df,
+        pagination=True,
+        search=True,
+        sort=True,
+    )
     
     return rx.vstack(
-        flavour_dropdown,
-        color_dropdown,
-        rx.text(f"Selected: {flavour_dropdown.State.selected_option}"),
-        rx.text(f"Selected: {color_dropdown.State.selected_option}"),#, on_click=[component_df.update_df, component_df.handle_change2]),
-        # table,
+        dropdowns['flavor'].element,
+        dropdowns['color'].element,
+        rx.text(f"Selected: {dropdowns['flavor'].selected_option}"),
+        rx.text(f"Selected: {dropdowns['color'].selected_option}"),#, on_click=[component_df.update_df, component_df.handle_change2]),
+        rx.text(f"Selected: {Filters.filters}", on_click=[Filters.update_filters]),
+        table,
         rx.select(
             ["apple", "grape", "pear"],
             default_value="apple",

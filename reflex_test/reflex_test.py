@@ -11,7 +11,7 @@ class State(rx.State):
     ...
 
 from .sidebar import sidebar
-from .filters import dropdowns
+from .filters import dropdown_elements
 
 
 def index() -> rx.Component:
@@ -30,7 +30,7 @@ def index() -> rx.Component:
                 href="https://reflex.dev/docs/getting-started/introduction/",
                 is_external=True,
             ),
-            dropdowns(),
+            dropdown_elements(),
             spacing="5",
             justify="center",
             min_height="85vh",
@@ -50,4 +50,5 @@ app = rx.App(
 )
 
 app.add_page(index)
+
 
