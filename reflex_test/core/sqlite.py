@@ -30,6 +30,11 @@ class SQLTable:
         return 'data/test.db'
     
     
+    @property
+    def memory_path(self):
+        return 'file::memory:?cache=shared'
+    
+    
     @staticmethod
     def convert_type(t0):
         if t0 == np.dtype('O'):
@@ -41,10 +46,15 @@ class SQLTable:
         return 'TEXT'
     
     
+    def get_conn(self):
+        if self.path == self.memory_path:
+            return self.get_conn_memory()
+        return sqlite3.connect(self.path)
+    
+    
     @lru_cache()
-    def get_conn(self, path=None):
-        path = self.path if path is None else path
-        return sqlite3.connect(path)
+    def get_conn_memory(self):
+        return sqlite3.connect(self.memory_path)
     
     
     def execute(self, sql):
@@ -108,7 +118,7 @@ class SQLTable:
         self.path = path
 
 
-    def get_sql(self, filters, match_strs=None, limit=None, select='all', group_bys=None, distinct=True, order_by=None, by_relevance=False):
+    def get_sql(self, filters=None, match_strs=None, limit=None, select='all', group_bys=None, distinct=True, order_by=None, by_relevance=False):
 
         if isinstance(match_strs, str):
             match_strs = [match_strs]

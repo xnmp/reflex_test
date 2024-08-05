@@ -9,6 +9,11 @@ def load_data():
     return df
 
 
+select_cols = [
+    'CASE_RECV_S', 'CASE_SUMY_X', 'State', 'case_sumy_length'
+]
+
+
 cat_cols = [
     'pdct_catg_x', 'pdct_sub_catg_x', 'CAUS_CATG_X', 'CAUS_SUB_CATG_X'#, 'State',
 ]

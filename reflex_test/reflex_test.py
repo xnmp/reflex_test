@@ -26,14 +26,15 @@ def index() -> rx.Component:
                 href="https://reflex.dev/docs/getting-started/introduction/",
                 is_external=True,
             ),
-            filters.element,
+            # filters.element,
             spacing="5",
             justify="center",
             min_height="85vh",
         ),
         rx.logo(),
     )
-    return rx.hstack(sidebar(), welcome)
+    
+    return rx.hstack(sidebar(), filters.element)
 
 
 app = rx.App(
@@ -44,6 +45,11 @@ app = rx.App(
         accent_color="teal",
     ),
     style=style,
+    stylesheets=[
+        # "https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css",
+        "https://cdn.jsdelivr.net/npm/@glideapps/glide-data-grid@6.0.3/dist/index.min.css",
+        # "https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css",
+    ],
 )
 
 app.add_page(index)
