@@ -16,3 +16,43 @@ class MultiSelect(rx.Component):
 #     # is_searchable: rx.Var[bool] = True
 
 
+# need: 
+# DateRangePicker for date cols - https://hypeserver.github.io/react-date-range/
+# Slider for num cols 
+# TextInput for text cols - https://www.npmjs.com/package/react-tagsinput or react-tag-input-component
+# try ag grid: https://www.npmjs.com/package/ag-grid-react
+
+
+class DateRange(rx.Component):
+    library = "react-date-range"
+    tag = "DateRange"  # or "DateRangePicker" depending on which component you want to use
+    is_default = True
+
+    ranges: rx.Var[Dict[str, Any]]
+    onChange: rx.EventHandler
+    months: rx.Var[int] = 2
+    direction: rx.Var[str] = "horizontal"
+    # Add more props as needed
+
+
+class TagInput(rx.Component):
+    library = "react-tagsinput"
+    tag = "TagsInput"
+    is_default = True
+
+    value: rx.Var[List[str]]
+    onChange: rx.EventHandler
+    addKeys: rx.Var[List[str]] = ["Enter", "Tab"]
+    removeKeys: rx.Var[List[str]] = ["Backspace"]
+    # Add more props as needed
+
+
+class AgGrid(rx.Component):
+    library = "ag-grid-react"
+    tag = "AgGridReact"
+    is_default = True
+
+    columnDefs: rx.Var[List[Dict[str, Any]]]
+    rowData: rx.Var[List[Dict[str, Any]]]
+    onGridReady: rx.EventHandler
+    # Add more props as needed
