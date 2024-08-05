@@ -3,32 +3,43 @@ import pandas as pd
 
 from typing import List, Dict, Any
 
-from .multi_select import MultiSelect
+from .react_components import MultiSelect
 from ..core.statefulness import Stateful, state, state_var, handler
 
 
 class Dropdown(Stateful):
 
     @state
-    def selected_option(self):
-        return self.options[0]['value']
+    def selected(self) -> List[str]:
+        return []
+    
+    @state_var(cached=True)
+    def sql_string(self):
+        if len(self.selected) > 1:
+            in_str = ','.join([f"'{el}'" for el in self.selected])
+            return f"{self.column_name} in ({in_str})"
+        elif len(self.selected) == 1:
+            return f"{self.column_name} = '{self.selected[0]}'"
+        return None
     
     @handler
     def handle_change(self, values):
         print("Dropdown Values:", values, type(values), self.name, type(self))
-        self.selected_option = [self.name + '-' + el['value'] for el in values]
+        self.selected = [el['value'] for el in values]
         
-    def __init__(self, name, options):
+    def __init__(self, name, options, column_name=None, is_multi=True):
         self.name = name
+        self.column_name = column_name or name
         self.options = options
+        self.is_multi = is_multi
     
     @property
     def element(self):
         return MultiSelect.create(
             options=self.options,
-            is_multi=True,
+            is_multi=self.is_multi,
             on_change=self.handle_change,
-            placeholder="Select an option..."
+            placeholder=f"Select {self.name}"
         )
 
 
@@ -36,29 +47,30 @@ class Filters(Stateful):
     
     @state
     # really want to be able to add @rx.cached_var here but can't - can't use await self.get_state within @rx.cached_var
-    def filter_dict(self): 
-        return {}
+    def filter_strs(self): 
+        return set()
     
-    @state_var
+    @state_var(cached=True)
     def df(self) -> pd.DataFrame:
-        if self.filter_dict:
-            return pd.DataFrame(self.filter_dict.values(), index=self.filter_dict.keys(), columns=['col1'])
+        if self.filter_strs:
+            return self.table.query(self.filter_strs)
         return pd.DataFrame()
     
     @state_var(cached=True)
     def df2(self) -> pd.DataFrame:
-        res = self.df
-        res['gogo'] = 1
-        return res
+        if len(self.df) < 100:
+            return self.df
+        return self.df.sample(100)
     
-    def __init__(self, name, filter_objs):
+    def __init__(self, name, filter_objs, table):
         self.name = name
+        self.table = table
         self.filter_objs = filter_objs
     
     @handler
     async def update_filters(self):
         states = {filter_obj.name: await self.get_state(filter_obj.State) for filter_obj in self.filter_objs}
-        self.filter_dict = {k: v.selected_option[0] for k, v in states.items()}
+        self.filter_strs = {v.sql_string for k, v in states.items() if v.sql_string}
     
     @property
     def element(self):
@@ -79,22 +91,4 @@ class Filters(Stateful):
             data_table,
             button,
         )
-
-
-options_dict ={
-    'flavor': [
-        {"value": "chocolate", "label": "Chocolate"},
-        {"value": "strawberry", "label": "Strawberry"},
-        {"value": "vanilla", "label": "Vanilla"}
-    ],
-    'color': [
-        {"value": "green", "label": "Green"},
-        {"value": "red", "label": "Red"},
-        {"value": "blue", "label": "Blue"}
-    ]
-}
-
-dropdowns = {name: Dropdown(name, options=options) for name, options in options_dict.items()}
-
-filters = Filters('filters', filter_objs=dropdowns.values())
 

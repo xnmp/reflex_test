@@ -1,18 +1,22 @@
 import reflex as rx
 
-from .filters import dropdowns
+from .instantiate import dropdowns
 
 
 def accordion() -> rx.Component:
     
     item1 = rx.vstack(
-        dropdowns['flavor'].element,
-        rx.text(f"Selected: {dropdowns['flavor'].selected_option}"),
+        dropdowns['pdct_catg_x'].element,
+        dropdowns['pdct_sub_catg_x'].element,
+        rx.text(f"Selected: {dropdowns['pdct_catg_x'].sql_string}"),
+        rx.text(f"Selected: {dropdowns['pdct_sub_catg_x'].sql_string}"),
     )
     
     item2 = rx.vstack(
-        dropdowns['color'].element,
-        rx.text(f"Selected: {dropdowns['color'].selected_option}"),
+        dropdowns['CAUS_CATG_X'].element,
+        dropdowns['CAUS_SUB_CATG_X'].element,
+        rx.text(f"Selected: {dropdowns['CAUS_CATG_X'].sql_string}"),
+        rx.text(f"Selected: {dropdowns['CAUS_SUB_CATG_X'].sql_string}"),
     )
     
     return rx.accordion.root(
@@ -33,7 +37,6 @@ def accordion() -> rx.Component:
         collapsible=True,
         variant="surface",
     )
-
 
 
 def sidebar() -> rx.Component:

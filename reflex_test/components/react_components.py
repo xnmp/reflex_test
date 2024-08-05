@@ -10,6 +10,7 @@ class MultiSelect(rx.Component):
     is_multi: rx.Var[bool] = False
     value: rx.Var[dict]
     placeholder: rx.Var[str]
+    # style: rx.Var[Dict[str, Any]]  # Add this line
 #     # is_disabled: rx.Var[bool] = False
 #     # is_clearable: rx.Var[bool] = True
 #     # is_searchable: rx.Var[bool] = True

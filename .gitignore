@@ -3,3 +3,8 @@
 .web
 __pycache__/
 assets/external/
+Archive/
+data/
+repopack-output.txt
+script_test.py
+.vscode

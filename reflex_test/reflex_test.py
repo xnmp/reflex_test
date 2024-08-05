@@ -4,9 +4,10 @@ import reflex as rx
 from rxconfig import config
 
 
-from .filter_bar import sidebar
+from .layout.left_bar import sidebar
 # from .sidebar import sidebar
-from .components.filters import filters
+from .layout.instantiate import filters
+from .style import style
 
 
 def index() -> rx.Component:
@@ -41,7 +42,8 @@ app = rx.App(
         has_background=True,
         radius="large",
         accent_color="teal",
-    )
+    ),
+    style=style,
 )
 
 app.add_page(index)
