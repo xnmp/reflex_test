@@ -6,7 +6,7 @@ from rxconfig import config
 
 from .filter_bar import sidebar
 # from .sidebar import sidebar
-# from .filters import dropdown_elements
+from .components.filters import filters
 
 
 def index() -> rx.Component:
@@ -25,6 +25,7 @@ def index() -> rx.Component:
                 href="https://reflex.dev/docs/getting-started/introduction/",
                 is_external=True,
             ),
+            filters.element,
             spacing="5",
             justify="center",
             min_height="85vh",

@@ -18,6 +18,30 @@ def handler(func):
     return func
 
 
+def get_original_init(cls):
+    for base in cls.__mro__:
+        if '__original_init__' in base.__dict__:
+            return base.__original_init__
+    return lambda self: None  # Default no-op init if no other init is found
+
+
+def get_stateful_name(stateful_obj):
+    
+    try:
+        if not hasattr(stateful_obj.__class__, 'names'):
+            stateful_obj.__class__.names = set()
+        if stateful_obj.name in stateful_obj.__class__.names:
+            raise Exception(f"Stateful class names must be unique, {stateful_obj.name} is already taken")
+    except AttributeError:
+        raise Exception("Stateful classes must have a name attribute")
+    stateful_obj.__class__.names.add(stateful_obj.name)
+    
+    # IMPORTANT: the state_id must be a deterministic function of the class name - if it's different when compiling vs when running then Reflex will break
+    state_id = Hasher.generate(stateful_obj.__class__.__name__ + stateful_obj.name)
+    state_class_name = 'State' + state_id
+    return state_class_name
+
+
 class StateWithStateful(rx.State):
     def __getattr__(self, name: str):
         try:
@@ -30,7 +54,7 @@ class StatefulMeta(type):
     
     allstates = {}
     
-    def __new__(cls, name, bases, attrs):
+    def __new__(meta_cls, cls_name, bases, attrs):
 
         state_attrs = {}
 
@@ -43,24 +67,12 @@ class StatefulMeta(type):
         # for attr_name in state_attrs:
         #     del attrs[attr_name]
 
-        original_init = attrs.get('__init__', lambda self: None)
+        original_init = attrs.get('__init__', get_original_init(bases[0] if bases else object))
         
         def new_init(self, *args, **kwargs):
-            
             original_init(self, *args, **kwargs)
             
-            try:
-                if not hasattr(cls, 'names'):
-                    cls.names = set()
-                if self.name in cls.names:
-                    raise Exception(f"Stateful class names must be unique, {self.name} is already taken")
-            except AttributeError:
-                raise Exception("Stateful classes must have a name attribute")
-            cls.names.add(self.name)
-            
-            # IMPORTANT: the state_id must be a deterministic function of the class name - if it's different when compiling vs when running then Reflex will break
-            state_id = Hasher.generate(self.__class__.__name__ + self.name)
-            state_class_name = 'State' + state_id
+            state_class_name = get_stateful_name(self)
             # state_attrs['__module__'] = attrs['__module__']
             # state_attrs['__qualname__'] = state_class_name
             
@@ -73,13 +85,17 @@ class StatefulMeta(type):
             self.State._stateful_obj = self
         
         attrs['__init__'] = new_init
+        attrs['__original_init__'] = original_init
         attrs['_state_attrs'] = state_attrs
 
-        res = super().__new__(cls, name, bases, attrs)
+        res = super().__new__(meta_cls, cls_name, bases, attrs)
         return res
 
 
 class Stateful(metaclass=StatefulMeta):
+    
+    def __init__(self, name):
+        self.name = name
 
     def __getattribute__(self, name):
         if name in ['_state_attrs', '_state']:

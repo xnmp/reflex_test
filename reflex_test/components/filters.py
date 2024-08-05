@@ -11,13 +11,11 @@ class Dropdown(Stateful):
 
     @state
     def selected_option(self):
-        print("options:", self, type(self))
         return self.options[0]['value']
-        # return self.options[0]['value']
     
     @handler
     def handle_change(self, values):
-        print("Values:", values, type(values), self.name, type(self))
+        print("Dropdown Values:", values, type(values), self.name, type(self))
         self.selected_option = [self.name + '-' + el['value'] for el in values]
         
         # can't do this...
@@ -38,7 +36,7 @@ class Dropdown(Stateful):
         )
 
 
-options ={
+options_dict ={
     'flavor': [
         {"value": "chocolate", "label": "Chocolate"},
         {"value": "strawberry", "label": "Strawberry"},
@@ -51,19 +49,48 @@ options ={
     ]
 }
 
-dropdowns = {name: Dropdown(name, options=options[name]) for name in options}
+dropdowns = {name: Dropdown(name, options=options) for name, options in options_dict.items()}
 
 
 class Filters(Stateful):
     
-    filters: Dict[str, Any] = {}
-    df: pd.DataFrame = pd.DataFrame()
+    @state
+    def filters(self): 
+        return {}
+    
+    @state
+    def df(self) -> pd.DataFrame:
+        return pd.DataFrame()
     
     # really want to be able to add @rx.cached_var here but can't
+    @handler
     async def update_filters(self):
         states = {name: await self.get_state(dropdown.State) for name, dropdown in dropdowns.items()}
         self.filters = {k: v.selected_option[0] for k, v in states.items()}
-        self.df = pd.DataFrame(self.filters, index=[0])
+        self.df = pd.DataFrame(self.filters.values(), index=self.filters.keys(), columns=['col1'])
+    
+    @property
+    def element(self):
+        data_table = rx.data_table(
+            data=self.df,
+            pagination=True,
+            search=True,
+            sort=True,
+        )
+        button = rx.button(
+            rx.icon(tag='play'),
+            "Update Data",
+            on_click=self.update_filters,
+            variant="outline",
+            color="green",
+        )
+        return rx.vstack(
+            data_table,
+            button,
+        )
+
+
+filters = Filters('filters')
 
 
 def dropdown_elements():
