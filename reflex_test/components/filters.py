@@ -71,7 +71,8 @@ class Filters(Stateful):
         # res['CASE_SUMY_X'] = res['CASE_SUMY_X'].apply(lambda x: '\n'.join(textwrap.wrap(x, width=70)))
         for col in self.display_columns:
             res[col] = res[col].astype(str)
-        res = res[self.display_columns].values.tolist()#to_dict(orient='records')
+        res = res[self.display_columns].values.tolist() #if using glide grid
+        # res = res[self.display_columns].to_dict(orient='records') #if using ag grid
         return res
     
     @property
@@ -93,7 +94,7 @@ class Filters(Stateful):
             color="green",
         )
         return rx.vstack(
-            self.grid_element,
+            self.table_element,
             button,
         )
 
@@ -101,9 +102,11 @@ class Filters(Stateful):
     def column_defs(self) -> List[Dict[str, Any]]:
         res = []
         for col in self.display_columns:
-            res0 = {'title': col, 'headerName': col, 'allowWrapping': True, 'type': 'str'}
+            # res0 = {'title': col} #for glide
+            # res0 = {'field': col, 'headerName': col} #for ag grid
+            res0 = {'name': col, 'sort':True} #for base rx.data_table
             if col in 'CASE_SUMY_X':
-                res0['width'] = 400
+                res0['width'] = 800
             res.append(res0)
         return res
     
@@ -118,6 +121,21 @@ class Filters(Stateful):
             row_height=50,
             allowWrapping=True,
         )
+        
+    @property
+    def table_element(self):
+        return rx.data_table(
+            columns=self.column_defs,
+            data=self.display_data,
+            # resizable=True,
+        )
+    
+    @property
+    def ag_grid_element(self):
+        return AgGrid.create(
+            columnDefs=self.column_defs,
+            rowData=self.display_data,
+        )
 
 
 class Embeddings(Stateful):
@@ -128,9 +146,4 @@ class Embeddings(Stateful):
         res = self.data
         res['embed_x','embed_y'] = calculate_embeddings(res['CASE_SUMY_X'])
         return self.data
-    
-    
-    def __init__(self, name, data_stateful):
-        self.name = name
-        self.data_stateful = data_stateful
 

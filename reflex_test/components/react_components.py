@@ -41,8 +41,7 @@ class TagInput(rx.Component):
     removeKeys: rx.Var[List[str]] = ["Backspace"]
 
 
-
-class AgGrid(rx.NoSSRComponent):
+class AgGrid(rx.Component):
     library = "ag-grid-react"
     tag = "AgGridReact"
     columnDefs: rx.Var[List[Dict[str, Any]]]
