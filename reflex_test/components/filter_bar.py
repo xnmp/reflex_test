@@ -1,6 +1,6 @@
 import reflex as rx
 
-from .components.filters import dropdowns, Filters
+from .filters import dropdowns
 
 
 def accordion() -> rx.Component:

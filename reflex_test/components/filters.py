@@ -18,10 +18,6 @@ class Dropdown(Stateful):
         print("Dropdown Values:", values, type(values), self.name, type(self))
         self.selected_option = [self.name + '-' + el['value'] for el in values]
         
-        # can't do this...
-        # Filters.filters[self.name] = [el['value'] for el in values]
-        # print("===\n", Filters.update_filters(self.name, self.selected_option))
-        
     def __init__(self, name, options):
         self.name = name
         self.options = options
@@ -36,33 +32,17 @@ class Dropdown(Stateful):
         )
 
 
-options_dict ={
-    'flavor': [
-        {"value": "chocolate", "label": "Chocolate"},
-        {"value": "strawberry", "label": "Strawberry"},
-        {"value": "vanilla", "label": "Vanilla"}
-    ],
-    'color': [
-        {"value": "green", "label": "Green"},
-        {"value": "red", "label": "Red"},
-        {"value": "blue", "label": "Blue"}
-    ]
-}
-
-dropdowns = {name: Dropdown(name, options=options) for name, options in options_dict.items()}
-
-
 class Filters(Stateful):
     
     @state
     # really want to be able to add @rx.cached_var here but can't - can't use await self.get_state within @rx.cached_var
-    def filters(self): 
+    def filter_dict(self): 
         return {}
     
     @state_var
     def df(self) -> pd.DataFrame:
-        if self.filters:
-            return pd.DataFrame(self.filters.values(), index=self.filters.keys(), columns=['col1'])
+        if self.filter_dict:
+            return pd.DataFrame(self.filter_dict.values(), index=self.filter_dict.keys(), columns=['col1'])
         return pd.DataFrame()
     
     @state_var(cached=True)
@@ -71,10 +51,14 @@ class Filters(Stateful):
         res['gogo'] = 1
         return res
     
+    def __init__(self, name, filter_objs):
+        self.name = name
+        self.filter_objs = filter_objs
+    
     @handler
     async def update_filters(self):
-        states = {name: await self.get_state(dropdown.State) for name, dropdown in dropdowns.items()}
-        self.filters = {k: v.selected_option[0] for k, v in states.items()}
+        states = {filter_obj.name: await self.get_state(filter_obj.State) for filter_obj in self.filter_objs}
+        self.filter_dict = {k: v.selected_option[0] for k, v in states.items()}
     
     @property
     def element(self):
@@ -97,15 +81,20 @@ class Filters(Stateful):
         )
 
 
-filters = Filters('filters')
+options_dict ={
+    'flavor': [
+        {"value": "chocolate", "label": "Chocolate"},
+        {"value": "strawberry", "label": "Strawberry"},
+        {"value": "vanilla", "label": "Vanilla"}
+    ],
+    'color': [
+        {"value": "green", "label": "Green"},
+        {"value": "red", "label": "Red"},
+        {"value": "blue", "label": "Blue"}
+    ]
+}
 
+dropdowns = {name: Dropdown(name, options=options) for name, options in options_dict.items()}
 
-def dropdown_elements():
+filters = Filters('filters', filter_objs=dropdowns.values())
 
-    return rx.vstack(
-        rx.select(
-            ["apple", "grape", "pear"],
-            default_value="apple",
-            name="select",
-        ),
-    )
