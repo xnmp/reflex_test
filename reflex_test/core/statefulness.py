@@ -18,13 +18,6 @@ def handler(func):
     return func
 
 
-def get_original_init(cls):
-    for base in cls.__mro__:
-        if '__original_init__' in base.__dict__:
-            return base.__original_init__
-    return lambda self: None  # Default no-op init if no other init is found
-
-
 def get_stateful_name(stateful_obj):
     
     try:
@@ -67,29 +60,29 @@ class StatefulMeta(type):
         # for attr_name in state_attrs:
         #     del attrs[attr_name]
 
-        original_init = attrs.get('__init__', get_original_init(bases[0] if bases else object))
+        original_init = attrs.get('__init__', bases[0].__original_init__ if bases else lambda x: None)
         
-        def new_init(self, *args, **kwargs):
-            original_init(self, *args, **kwargs)
+        def new_init(cls_instance, *args, **kwargs):
+            original_init(cls_instance, *args, **kwargs)
             
-            state_class_name = get_stateful_name(self)
+            state_class_name = get_stateful_name(cls_instance)
             # state_attrs['__module__'] = attrs['__module__']
             # state_attrs['__qualname__'] = state_class_name
             
             state_class_attrs = {
-                name: prop.fget(self) if isinstance(prop, property) else prop
+                name: prop.fget(cls_instance) if isinstance(prop, property) else prop
                 for name, prop in state_attrs.items()
             }
             
-            self.State = type(state_class_name, (StateWithStateful,), state_class_attrs)
-            self.State._stateful_obj = self
+            cls_instance.State = type(state_class_name, (StateWithStateful,), state_class_attrs)
+            cls_instance.State._stateful_obj = cls_instance
         
         attrs['__init__'] = new_init
         attrs['__original_init__'] = original_init
         attrs['_state_attrs'] = state_attrs
 
-        res = super().__new__(meta_cls, cls_name, bases, attrs)
-        return res
+        new_cls = super().__new__(meta_cls, cls_name, bases, attrs)
+        return new_cls
 
 
 class Stateful(metaclass=StatefulMeta):
