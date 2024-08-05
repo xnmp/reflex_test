@@ -47,7 +47,7 @@ class StatefulMeta(type):
     
     allstates = {}
     
-    def __new__(meta_cls, cls_name, bases, attrs):
+    def __new__(meta_cls, stateful_cls_name, bases, attrs):
 
         state_attrs = {}
 
@@ -62,27 +62,23 @@ class StatefulMeta(type):
 
         original_init = attrs.get('__init__', bases[0].__original_init__ if bases else lambda x: None)
         
-        def new_init(cls_instance, *args, **kwargs):
-            original_init(cls_instance, *args, **kwargs)
+        def new_init(stateful_cls_instance, *args, **kwargs):
             
-            state_class_name = get_stateful_name(cls_instance)
-            # state_attrs['__module__'] = attrs['__module__']
-            # state_attrs['__qualname__'] = state_class_name
-            
-            state_class_attrs = {
-                name: prop.fget(cls_instance) if isinstance(prop, property) else prop
+            original_init(stateful_cls_instance, *args, **kwargs)
+            state_attrs2 = {
+                name: prop.fget(stateful_cls_instance) if isinstance(prop, property) else prop
                 for name, prop in state_attrs.items()
             }
             
-            cls_instance.State = type(state_class_name, (StateWithStateful,), state_class_attrs)
-            cls_instance.State._stateful_obj = cls_instance
+            stateful_cls_instance.State = type(get_stateful_name(stateful_cls_instance), (StateWithStateful,), state_attrs2)
+            stateful_cls_instance.State._stateful_obj = stateful_cls_instance
         
         attrs['__init__'] = new_init
         attrs['__original_init__'] = original_init
         attrs['_state_attrs'] = state_attrs
 
-        new_cls = super().__new__(meta_cls, cls_name, bases, attrs)
-        return new_cls
+        stateful_cls = super().__new__(meta_cls, stateful_cls_name, bases, attrs)
+        return stateful_cls
 
 
 class Stateful(metaclass=StatefulMeta):
