@@ -4,7 +4,7 @@ import pandas as pd
 from typing import List, Dict, Any
 
 from .multi_select import MultiSelect
-from ..core.statefulness import Stateful, state, handler
+from ..core.statefulness import Stateful, state, state_var, handler
 
 
 class Dropdown(Stateful):
@@ -55,24 +55,31 @@ dropdowns = {name: Dropdown(name, options=options) for name, options in options_
 class Filters(Stateful):
     
     @state
+    # really want to be able to add @rx.cached_var here but can't - can't use await self.get_state within @rx.cached_var
     def filters(self): 
         return {}
     
-    @state
+    @state_var
     def df(self) -> pd.DataFrame:
+        if self.filters:
+            return pd.DataFrame(self.filters.values(), index=self.filters.keys(), columns=['col1'])
         return pd.DataFrame()
     
-    # really want to be able to add @rx.cached_var here but can't
+    @state_var(cached=True)
+    def df2(self) -> pd.DataFrame:
+        res = self.df
+        res['gogo'] = 1
+        return res
+    
     @handler
     async def update_filters(self):
         states = {name: await self.get_state(dropdown.State) for name, dropdown in dropdowns.items()}
         self.filters = {k: v.selected_option[0] for k, v in states.items()}
-        self.df = pd.DataFrame(self.filters.values(), index=self.filters.keys(), columns=['col1'])
     
     @property
     def element(self):
         data_table = rx.data_table(
-            data=self.df,
+            data=self.df2,
             pagination=True,
             search=True,
             sort=True,
@@ -95,20 +102,7 @@ filters = Filters('filters')
 
 def dropdown_elements():
 
-    table = rx.data_table(
-        data=Filters.df,
-        pagination=True,
-        search=True,
-        sort=True,
-    )
-    
     return rx.vstack(
-        dropdowns['flavor'].element,
-        dropdowns['color'].element,
-        rx.text(f"Selected: {dropdowns['flavor'].selected_option}"),
-        rx.text(f"Selected: {dropdowns['color'].selected_option}"),#, on_click=[component_df.update_df, component_df.handle_change2]),
-        rx.text(f"Selected: {Filters.filters}", on_click=[Filters.update_filters]),
-        table,
         rx.select(
             ["apple", "grape", "pear"],
             default_value="apple",
