@@ -38,28 +38,6 @@ def sidebar_items() -> rx.Component:
     )
 
 
-
-def accordion() -> rx.Component:
-    return rx.accordion.root(
-        rx.accordion.item(
-            header="First Item",
-            content="The first accordion item's content",
-        ),
-        rx.accordion.item(
-            header="Second Item",
-            content="The second accordion item's content",
-        ),
-        rx.accordion.item(
-            header="Third item",
-            content="The third accordion item's content",
-        ),
-        width="300px",
-        type="multiple",
-        collapsible=True,
-        variant="surface",
-    )
-
-
 def sidebar() -> rx.Component:
     return rx.box(
         rx.desktop_only(

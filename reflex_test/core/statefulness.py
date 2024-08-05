@@ -36,7 +36,7 @@ class StatefulMeta(type):
 
         for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, property) and hasattr(attr_value.fget, '_is_state'):
-                state_attrs[attr_name] = attr_value.fget(None)
+                state_attrs[attr_name] = attr_value#.fget(None)
             elif hasattr(attr_value, '_is_state_change'):
                 state_attrs[attr_name] = attr_value
         
@@ -46,6 +46,7 @@ class StatefulMeta(type):
         original_init = attrs.get('__init__', lambda self: None)
         
         def new_init(self, *args, **kwargs):
+            
             original_init(self, *args, **kwargs)
             
             try:
@@ -59,12 +60,16 @@ class StatefulMeta(type):
             
             # IMPORTANT: the state_id must be a deterministic function of the class name - if it's different when compiling vs when running then Reflex will break
             state_id = Hasher.generate(self.__class__.__name__ + self.name)
-            
             state_class_name = 'State' + state_id
-            print("State_class_name:", state_class_name)
             # state_attrs['__module__'] = attrs['__module__']
             # state_attrs['__qualname__'] = state_class_name
-            self.State = type(state_class_name, (StateWithStateful,), state_attrs)
+            
+            state_class_attrs = {
+                name: prop.fget(self) if isinstance(prop, property) else prop
+                for name, prop in state_attrs.items()
+            }
+            
+            self.State = type(state_class_name, (StateWithStateful,), state_class_attrs)
             self.State._stateful_obj = self
         
         attrs['__init__'] = new_init

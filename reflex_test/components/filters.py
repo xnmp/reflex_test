@@ -3,15 +3,17 @@ import pandas as pd
 
 from typing import List, Dict, Any
 
-from .components.multi_select import MultiSelect
-from .core.statefulness import Stateful, state, state_change
+from .multi_select import MultiSelect
+from ..core.statefulness import Stateful, state, state_change
 
 
 class Dropdown(Stateful):
 
     @state
     def selected_option(self):
-        return 'tg'
+        print("options:", self, type(self))
+        return self.options[0]['value']
+        # return self.options[0]['value']
     
     @state_change
     def handle_change(self, values):
@@ -36,7 +38,6 @@ class Dropdown(Stateful):
         )
 
 
-
 options ={
     'flavor': [
         {"value": "chocolate", "label": "Chocolate"},
@@ -53,7 +54,7 @@ options ={
 dropdowns = {name: Dropdown(name, options=options[name]) for name in options}
 
 
-class Filters(rx.State):
+class Filters(Stateful):
     
     filters: Dict[str, Any] = {}
     df: pd.DataFrame = pd.DataFrame()

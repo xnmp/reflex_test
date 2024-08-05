@@ -1,17 +1,12 @@
 """Welcome to Reflex! This file outlines the steps to create a basic app."""
 
 import reflex as rx
-
 from rxconfig import config
 
 
-class State(rx.State):
-    """The app state."""
-
-    ...
-
-from .sidebar import sidebar
-from .filters import dropdown_elements
+from .filter_bar import sidebar
+# from .sidebar import sidebar
+# from .filters import dropdown_elements
 
 
 def index() -> rx.Component:
@@ -30,7 +25,6 @@ def index() -> rx.Component:
                 href="https://reflex.dev/docs/getting-started/introduction/",
                 is_external=True,
             ),
-            dropdown_elements(),
             spacing="5",
             justify="center",
             min_height="85vh",
