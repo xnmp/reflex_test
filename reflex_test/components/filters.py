@@ -4,7 +4,7 @@ import pandas as pd
 from typing import List, Dict, Any
 
 from .multi_select import MultiSelect
-from ..core.statefulness import Stateful, state, state_change
+from ..core.statefulness import Stateful, state, handler
 
 
 class Dropdown(Stateful):
@@ -15,7 +15,7 @@ class Dropdown(Stateful):
         return self.options[0]['value']
         # return self.options[0]['value']
     
-    @state_change
+    @handler
     def handle_change(self, values):
         print("Values:", values, type(values), self.name, type(self))
         self.selected_option = [self.name + '-' + el['value'] for el in values]

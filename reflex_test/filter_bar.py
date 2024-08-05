@@ -3,7 +3,6 @@ import reflex as rx
 from .components.filters import dropdowns, Filters
 
 
-
 def accordion() -> rx.Component:
     
     item1 = rx.vstack(

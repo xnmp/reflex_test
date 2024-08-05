@@ -13,8 +13,8 @@ def state(func):
     return property(func)
 
 
-def state_change(func):
-    func._is_state_change = True
+def handler(func):
+    func._is_handler = True
     return func
 
 
@@ -37,7 +37,7 @@ class StatefulMeta(type):
         for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, property) and hasattr(attr_value.fget, '_is_state'):
                 state_attrs[attr_name] = attr_value#.fget(None)
-            elif hasattr(attr_value, '_is_state_change'):
+            elif hasattr(attr_value, '_is_handler'):
                 state_attrs[attr_name] = attr_value
         
         # for attr_name in state_attrs:
