@@ -167,10 +167,11 @@ class Filters(Stateful):
     
     @property
     def ag_grid_element(self):
-        return AgGrid.create(
+        grid = AgGrid.create(
             columnDefs=self.column_defs,
             rowData=self.display_data,
         )
+        return rx.box(grid, class_name='style-reset')
 
 
 class Embeddings(Stateful):
