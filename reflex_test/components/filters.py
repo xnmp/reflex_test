@@ -1,3 +1,5 @@
+import plotly
+import plotly.express as px
 import json
 import reflex as rx
 import pandas as pd
@@ -132,6 +134,57 @@ class DatePickerComponent(Stateful):
         return DatePicker.create(
             onChange=self.handle_change,
         )
+
+
+class Constellation(Stateful):
+    
+    def __init__(self, name):
+        self.name = name
+        # self.text_col = text_col
+    
+    @state
+    def fig(self) -> plotly.graph_objects.Figure:
+        df = px.data.gapminder().query("country=='Canada'")
+        fig =px.line(
+            df,
+            x="year",
+            y="lifeExp",
+            title="Life expectancy in Canada",
+        )
+        fig.update_layout(height=500)
+        return fig
+    
+    @property
+    def element(self):
+        return rx.plotly(data=self.fig)
+
+
+class WordFreqBar(Stateful):
+    
+    @state
+    def words(self) -> pd.DataFrame:
+        return pd.DataFrame()
+    
+    @property
+    def element(self):
+        data = {
+            'Category': ['A', 'B', 'C', 'D', 'E'],
+            'Values': [20, 14, 23, 25, 22]
+        }
+        df = pd.DataFrame(data)
+
+        # Create the bar chart using Plotly Express
+        fig = px.bar(
+            df, 
+            x='Category', 
+            y='Values', 
+            title='Sample Bar Chart',
+            labels={'Values': 'Count'},
+            color='Category',
+            color_continuous_scale=px.colors.sequential.Viridis
+        )
+        
+        return rx.plotly(data=fig)
 
 
 class Filters(Stateful):
