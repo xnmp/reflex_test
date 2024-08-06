@@ -7,9 +7,6 @@ table = SQLTable('data/test.db')
 
 df = load_data()
 
-
-
-
 options_dict = {
     col: [
         {
@@ -20,11 +17,15 @@ options_dict = {
     for col in cat_cols
 }
 
-
 dropdowns = {name: Dropdown(name, options=options) for name, options in options_dict.items()}
+taginput_and = TagInputComponent('tag_and', and_or='AND')
+taginput_or = TagInputComponent('tag_or', and_or='OR')
+taginput_not = TagInputComponent('tag_not', and_or='NOT')
 
-filters = Filters('filters', filter_objs=dropdowns.values(), table=table)
+date_picker_min = DatePickerComponent('date_picker_min', column_name='CASE_RECV_S', gt_or_lt='>=')
+date_picker_max = DatePickerComponent('date_picker_max', column_name='CASE_RECV_S', gt_or_lt='<=')
 
-taginput = TagInputComponent('tag')
+all_filters = list(dropdowns.values()) + [taginput_and, taginput_or, taginput_not, date_picker_min, date_picker_max]
 
-date_picker = DatePickerComponent('date_picker')
+filters = Filters('filters', filter_objs=all_filters, table=table)
+

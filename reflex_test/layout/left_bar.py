@@ -1,39 +1,37 @@
 import reflex as rx
 
-from .instantiate import dropdowns, taginput, date_picker
+from .instantiate import dropdowns, taginput_and, taginput_or, taginput_not,date_picker_min, date_picker_max
 
 
 def accordion() -> rx.Component:
     
-    item1 = rx.vstack(
-        dropdowns['pdct_catg_x'].element,
-        dropdowns['pdct_sub_catg_x'].element,
-        rx.text(f"Selected: {dropdowns['pdct_catg_x'].sql_string}"),
-        rx.text(f"Selected: {dropdowns['pdct_sub_catg_x'].sql_string}"),
+    all_dropdowns = rx.vstack(*[dropdown.element for dropdown in dropdowns.values()])
+        # rx.text(f"Selected: {dropdowns['pdct_catg_x'].query_args}"),
+        # rx.text(f"Selected: {dropdowns['pdct_sub_catg_x'].query_args}"),
+        
+    keywords = rx.vstack(
+        taginput_and.element,
+        taginput_or.element,
+        taginput_not.element,
     )
     
-    item2 = rx.vstack(
-        dropdowns['CAUS_CATG_X'].element,
-        dropdowns['CAUS_SUB_CATG_X'].element,
-        rx.text(f"Selected: {dropdowns['CAUS_CATG_X'].sql_string}"),
-        rx.text(f"Selected: {dropdowns['CAUS_SUB_CATG_X'].sql_string}"),
+    dates = rx.vstack(
+        date_picker_min.element,
+        date_picker_max.element,
     )
     
     return rx.accordion.root(
         rx.accordion.item(
-            header="First Item",
-            content=item1,
+            header="Categorical",
+            content=all_dropdowns,
         ),
         rx.accordion.item(
-            header="Second Item",
-            content=item2,
+            header="Keywords",
+            content=keywords,
         ),
         rx.accordion.item(
-            header="Third item",
-            content=rx.vstack(
-                taginput.element,
-                date_picker.element,
-            )
+            header="Dates",
+            content=dates,
         ),
         width="100%",
         type="multiple",

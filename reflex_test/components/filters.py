@@ -1,6 +1,7 @@
 import json
 import reflex as rx
 import pandas as pd
+import datetime as dt
 
 from typing import List, Dict, Any
 
@@ -9,30 +10,30 @@ from ..core.statefulness import Stateful, state, state_var, handler
 
 
 class Dropdown(Stateful):
-
-    @state
-    def selected(self) -> List[str]:
-        return []
     
-    @state_var(cached=True)
-    def sql_string(self):
-        if len(self.selected) > 1:
-            in_str = ','.join([f"'{el}'" for el in self.selected])
-            return f"{self.column_name} in ({in_str})"
-        elif len(self.selected) == 1:
-            return f"{self.column_name} = '{self.selected[0]}'"
-        return None
-    
-    @handler
-    def handle_change(self, values):
-        print("Dropdown Values:", values, type(values), self.name, type(self))
-        self.selected = [el['value'] for el in values]
-        
     def __init__(self, name, options, column_name=None, is_multi=True):
         self.name = name
         self.column_name = column_name or name
         self.options = options
         self.is_multi = is_multi
+    
+    @state
+    def selected(self) -> List[str]:
+        return []
+    
+    @state_var(cached=True)
+    def query_args(self) -> Dict[str, List[str]]:
+        if len(self.selected) > 1:
+            in_str = ','.join([f"'{el}'" for el in self.selected])
+            return {'filters': [f"{self.column_name} in ({in_str})"]}
+        elif len(self.selected) == 1:
+            return {'filters': [f"{self.column_name} = '{self.selected[0]}'"]}
+        return {}
+    
+    @handler
+    def handle_change(self, values):
+        print("Dropdown Values:", values, type(values), self.name, type(self))
+        self.selected = [el['value'] for el in values]
     
     @property
     def element(self):
@@ -45,51 +46,86 @@ class Dropdown(Stateful):
 
 
 class TagInputComponent(Stateful):
+    
+    def __init__(self, name, and_or='AND'):
+        self.name = name
+        self.and_or = and_or
 
     @state
-    def selected(self) -> List[str]:
-        return ['Hello']
+    def selected_tags(self) -> List[str]:
+        return []
+    
+    @state_var(cached=True)
+    def query_args(self) -> Dict[str, List[str]]:
+        return {'match_strs': [f"{self.and_or} {val}" for val in self.selected_tags]}
     
     @handler
     def handle_change(self, values):
         print("TagInput Values:", values)
-        self.selected = values#[el['value'] for el in values]
+        self.selected_tags = values#[el['value'] for el in values]
     
     @property
     def element(self):
         return TagInput.create(
             onChange=self.handle_change,
-            value=self.selected,
+            value=self.selected_tags,
+            inputProps={'placeholder': f'Add {self.and_or} keywords'},
         )
 
 
 class DateRangeComponent(Stateful):
+    
+    def __init__(self, name, column_name=None):
+        self.name = name
+        self.column_name = column_name or name
+    
+    @state
+    def selected_dates(self) -> List[Dict[str, Any]]:
+        return [{}]
+    
+    @state_var(cached=True)
+    def query_args(self) -> Dict[str, List[str]]:
+        return {'filters': [f"{self.column_name} between '{self.selected_dates[0]['start_date']}' and '{self.selected_dates[0]['end_date']}'"]}
 
     @handler
-    def handle_change(self, drange):
-        return
+    def handle_change(self, values):
+        self.selected_dates = values
 
     @property
     def element(self):
         return rx.box(
             DateRange.create(
                 onChange=self.handle_change,
-                ranges=[{}],
+                ranges=self.selected_dates,
             ),
             class_name='style-reset'
         )
 
 
 class DatePickerComponent(Stateful):
+    
+    def __init__(self, name, column_name=None, gt_or_lt='>='):
+        self.name = name
+        self.column_name = column_name or name
+        self.gt_or_lt = gt_or_lt
 
     @state
-    def selected(self) -> str:
+    def selected_date(self) -> str:
         return ''
+    
+    @state_var(cached=True)
+    def query_args(self) -> Dict[str, List[str]]:
+        if self.selected_date:
+            return {'filters': [f"{self.column_name} {self.gt_or_lt} '{self.selected_date}'"]}
+        return {}
     
     @handler
     def handle_change(self, value):
-        print("DatePicker Value:", value, type(value))
-        self.selected = value
+        if value:
+            self.selected_date = str((pd.to_datetime(value) + dt.timedelta(hours=12)).date())
+        else:
+            self.selected_date = ''
+        print("DatePicker Value:", self.selected_date)
     
     @property
     def element(self):
@@ -107,14 +143,13 @@ class Filters(Stateful):
     
     @state
     # really want to be able to add @rx.cached_var here but can't - can't use await self.get_state within @rx.cached_var
-    def filter_strs(self): 
-        return set()
+    def query_args(self) -> Dict[str, List[str]]:
+        return {}
     
     @state_var(cached=True)
     def data(self) -> pd.DataFrame:
-        if self.filter_strs:
-            return self.table.query(self.filter_strs, limit=5)#, select=[''])
-        return self.table.query(limit=5)
+        print("SQL:", self.table.get_sql(**self.query_args, limit=10))
+        return self.table.query(**self.query_args, limit=10)#, select=[''])
     
     @state_var(cached=True)
     def display_data(self) -> List[List[Any]]:
@@ -132,16 +167,20 @@ class Filters(Stateful):
         return ['CASE_RECV_S', 'CASE_SUMY_X', 'State', 'case_sumy_length']
     
     @handler
-    async def update_filters(self):
-        states = {filter_obj.name: await self.get_state(filter_obj.State) for filter_obj in self.filter_objs}
-        self.filter_strs = {v.sql_string for k, v in states.items() if v.sql_string}
+    async def update_query_args(self):
+        states = [await self.get_state(filter_obj.State) for filter_obj in self.filter_objs]
+        res = {}
+        for state in states:
+            for k, v in state.query_args.items():
+                res[k] = res.get(k, []) + v
+        self.query_args = res
     
     @property
     def element(self):
         button = rx.button(
             rx.icon(tag='play'),
             "Update Data",
-            on_click=self.update_filters,
+            on_click=self.update_query_args,
             variant="outline",
             color="green",
         )
@@ -162,16 +201,17 @@ class Filters(Stateful):
             res.append(res0)
         return res
     
-    @property
-    def grid_element(self):
-        return rx.data_editor.create(
-            columns=self.column_defs,
-            data=self.display_data,
-            # on_cell_clicked=self.click_cell,
-            get_cell_for_selection=True,
-            row_height=50,
-            allowWrapping=True,
-        )
+    # @property
+    # def grid_element(self):
+    #     # glide grid
+    #     return rx.data_editor.create(
+    #         columns=self.column_defs,
+    #         data=self.display_data,
+    #         # on_cell_clicked=self.click_cell,
+    #         get_cell_for_selection=True,
+    #         row_height=50,
+    #         allowWrapping=True,
+    #     )
         
     @property
     def table_element(self):
@@ -181,13 +221,13 @@ class Filters(Stateful):
             # resizable=True,
         )
     
-    @property
-    def ag_grid_element(self):
-        grid = AgGrid.create(
-            columnDefs=self.column_defs,
-            rowData=self.display_data,
-        )
-        return rx.box(grid, class_name='style-reset')
+    # @property
+    # def ag_grid_element(self):
+    #     grid = AgGrid.create(
+    #         columnDefs=self.column_defs,
+    #         rowData=self.display_data,
+    #     )
+    #     return rx.box(grid, class_name='style-reset')
 
 
 class Embeddings(Stateful):

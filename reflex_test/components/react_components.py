@@ -1,6 +1,6 @@
 import datetime as dt
 import reflex as rx
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Callable
 
 class MultiSelect(rx.Component):
     library = "react-select"
@@ -50,8 +50,11 @@ class TagInput(rx.Component):
     value: rx.Var[List[str]]
     onChange: rx.EventHandler[lambda args: [args]]
     is_default = True
+    onlyUnique: rx.Var[bool] = True
     addKeys: rx.Var[List[str]] = ["Enter", "Tab"]
     removeKeys: rx.Var[List[str]] = ["Backspace"]
+    inputProps: rx.Var[Dict[str, Any]]
+    pasteSplit: rx.Var[Any] #Callable[[str], List[str]] = lambda x: list(map(str.strip, x.split(',')))
 
 
 class AgGrid(rx.Component):
