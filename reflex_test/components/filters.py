@@ -44,6 +44,42 @@ class Dropdown(Stateful):
         )
 
 
+class TagInputComponent(Stateful):
+
+    @state
+    def selected(self) -> List[str]:
+        return ['Hello']
+    
+    @handler
+    def handle_change(self, values):
+        print("TagInput Values:", values)
+        self.selected = values#[el['value'] for el in values]
+    
+    @property
+    def element(self):
+        return TagInput.create(
+            onChange=self.handle_change,
+            value=self.selected,
+        )
+
+
+class DateRangeComponent(Stateful):
+
+    @handler
+    def handle_change(self, drange):
+        return
+
+    @property
+    def element(self):
+        return rx.box(
+            DateRange.create(
+                onChange=self.handle_change,
+                ranges=[{}],
+            ),
+            class_name='style-reset'
+        )
+
+
 class Filters(Stateful):
     
     def __init__(self, name, filter_objs, table):
@@ -59,11 +95,11 @@ class Filters(Stateful):
     @state_var(cached=True)
     def data(self) -> pd.DataFrame:
         if self.filter_strs:
-            return self.table.query(self.filter_strs)#, select=[''])
+            return self.table.query(self.filter_strs, limit=5)#, select=[''])
         return self.table.query(limit=5)
     
     @state_var(cached=True)
-    def display_data(self) -> list[list[Any]]:
+    def display_data(self) -> List[List[Any]]:
         res = self.data
         if len(res) > 5:
             res = res.sample(5)
@@ -112,8 +148,7 @@ class Filters(Stateful):
     
     @property
     def grid_element(self):
-        from ..components.data_editor_wrap import DataEditorWrap
-        return DataEditorWrap.create(
+        return rx.data_editor.create(
             columns=self.column_defs,
             data=self.display_data,
             # on_cell_clicked=self.click_cell,

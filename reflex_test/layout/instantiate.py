@@ -1,5 +1,5 @@
 
-from ..components.filters import Dropdown, Filters
+from ..components.filters import Dropdown, Filters, TagInputComponent, DateRangeComponent
 from ..data_model.load_data import load_data, num_cols, date_col, cat_cols
 from ..core.sqlite import SQLTable
 
@@ -25,3 +25,6 @@ dropdowns = {name: Dropdown(name, options=options) for name, options in options_
 
 filters = Filters('filters', filter_objs=dropdowns.values(), table=table)
 
+taginput = TagInputComponent('tag')
+
+date_range = DateRangeComponent('date_range')

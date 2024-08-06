@@ -75,6 +75,8 @@ class SQLTable:
             {create_rows_str}
         )
         """
+
+        print(create_sql)
         
         self.execute(create_sql)
     

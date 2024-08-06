@@ -26,8 +26,8 @@ class MultiSelect(rx.Component):
 class DateRange(rx.Component):
     library = "react-date-range"
     tag = "DateRange"  # or "DateRangePicker" depending on which component you want to use
-    ranges: rx.Var[Dict[str, Any]]
-    onChange: rx.EventHandler
+    ranges: rx.Var[List[Dict[str, Any]]]
+    onChange: rx.EventHandler[lambda args: [args]]
     months: rx.Var[int] = 2
     direction: rx.Var[str] = "horizontal"
 
@@ -36,7 +36,8 @@ class TagInput(rx.Component):
     library = "react-tagsinput"
     tag = "TagsInput"
     value: rx.Var[List[str]]
-    onChange: rx.EventHandler
+    onChange: rx.EventHandler[lambda args: [args]]
+    is_default = True
     addKeys: rx.Var[List[str]] = ["Enter", "Tab"]
     removeKeys: rx.Var[List[str]] = ["Backspace"]
 

@@ -9,4 +9,7 @@ style = {
         "overflow-y": "visible",
         # "overflow-x": "scroll",
     },
+    '.style-reset': {
+        'all': 'revert',
+    }
 }
