@@ -4,7 +4,7 @@ import pandas as pd
 
 from typing import List, Dict, Any
 
-from .react_components import MultiSelect, AgGrid, DateRange, TagInput
+from .react_components import MultiSelect, AgGrid, DateRange, TagInput, DatePicker
 from ..core.statefulness import Stateful, state, state_var, handler
 
 
@@ -80,6 +80,24 @@ class DateRangeComponent(Stateful):
         )
 
 
+class DatePickerComponent(Stateful):
+
+    @state
+    def selected(self) -> str:
+        return ''
+    
+    @handler
+    def handle_change(self, value):
+        print("DatePicker Value:", value, type(value))
+        self.selected = value
+    
+    @property
+    def element(self):
+        return DatePicker.create(
+            onChange=self.handle_change,
+        )
+
+
 class Filters(Stateful):
     
     def __init__(self, name, filter_objs, table):
@@ -103,8 +121,6 @@ class Filters(Stateful):
         res = self.data
         if len(res) > 5:
             res = res.sample(5)
-        # import textwrap
-        # res['CASE_SUMY_X'] = res['CASE_SUMY_X'].apply(lambda x: '\n'.join(textwrap.wrap(x, width=70)))
         for col in self.display_columns:
             res[col] = res[col].astype(str)
         res = res[self.display_columns].values.tolist() #if using glide grid

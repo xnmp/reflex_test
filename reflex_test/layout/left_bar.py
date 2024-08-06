@@ -1,6 +1,6 @@
 import reflex as rx
 
-from .instantiate import dropdowns, taginput, date_range
+from .instantiate import dropdowns, taginput, date_picker
 
 
 def accordion() -> rx.Component:
@@ -32,7 +32,7 @@ def accordion() -> rx.Component:
             header="Third item",
             content=rx.vstack(
                 taginput.element,
-                date_range.element,
+                date_picker.element,
             )
         ),
         width="100%",

@@ -53,6 +53,12 @@ app = rx.App(
         # "https://cdn.jsdelivr.net/npm/@glideapps/glide-data-grid@6.0.3/dist/index.min.css",
         # "https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css",
     ],
+    tailwind={
+        "theme": {
+            "extend": {},
+        },
+        "plugins": ["@tailwindcss/typography"],
+    },
 )
 
 app.add_page(index)

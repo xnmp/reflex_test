@@ -1,3 +1,4 @@
+import datetime as dt
 import reflex as rx
 from typing import List, Dict, Any
 
@@ -30,6 +31,17 @@ class DateRange(rx.Component):
     onChange: rx.EventHandler[lambda args: [args]]
     months: rx.Var[int] = 2
     direction: rx.Var[str] = "horizontal"
+
+
+class DatePicker(rx.Component):
+    library = 'antd'
+    tag = 'DatePicker'
+    onChange: rx.EventHandler[lambda args: [args]]
+    value: rx.Var[Any]
+    format: rx.Var[Any] #= 'YYYY-MM-DD'
+    allowClear: rx.Var[bool] = True
+    minDate: rx.Var[Any]
+    maxDate: rx.Var[Any]
 
 
 class TagInput(rx.Component):
