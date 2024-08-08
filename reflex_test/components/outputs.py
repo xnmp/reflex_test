@@ -8,6 +8,102 @@ import plotly
 from typing import List, Dict, Any
 
 
+class DisplayTable(Stateful):
+    
+    def __init__(self, name, filter_objs, table):
+        self.name = name
+        self.table = table
+        self.filter_objs = filter_objs
+    
+    @state
+    def query_args(self) -> Dict[str, List[str]]:
+        # note: really want to be able to add @rx.cached_var here but can't - can't use await self.get_state within @rx.cached_var
+        return {}
+    
+    @state_var(cached=True)
+    def data(self) -> pd.DataFrame:
+        print("SQL:", self.table.get_sql(**self.query_args, limit=10))
+        return self.table.query(**self.query_args, limit=10)#, select=[''])
+    
+    @state_var(cached=True)
+    def display_data(self) -> List[List[Any]]:
+        res = self.data
+        if len(res) > 5:
+            res = res.sample(5)
+        for col in self.display_columns:
+            res[col] = res[col].astype(str)
+        res = res[self.display_columns].values.tolist()
+        # res = res[self.display_columns].to_dict(orient='records') #if using ag grid
+        return res
+    
+    @property
+    def display_columns(self):
+        return ['CASE_RECV_S', 'CASE_SUMY_X', 'State', 'case_sumy_length']
+    
+    @handler
+    async def update_query_args(self):
+        states = [await self.get_state(filter_obj.State) for filter_obj in self.filter_objs]
+        res = {}
+        for state in states:
+            for k, v in state.query_args.items():
+                res[k] = res.get(k, []) + v
+        self.query_args = res
+    
+    @property
+    def element(self):
+        button = rx.button(
+            rx.icon(tag='play'),
+            "Update Data",
+            on_click=self.update_query_args,
+            variant="outline",
+            color="green",
+        )
+        return rx.vstack(
+            self.table_element,
+            button,
+        )
+
+    @property
+    def column_defs(self) -> List[Dict[str, Any]]:
+        res = []
+        for col in self.display_columns:
+            # res0 = {'field': col, 'headerName': col} #for ag grid
+            res0 = {'name': col, 'sort':True} #for base rx.data_table
+            if col in 'CASE_SUMY_X':
+                res0['width'] = 800
+            res.append(res0)
+        return res
+    
+    @property
+    def table_element(self):
+        _element = rx.data_table(
+            columns=self.column_defs,
+            data=self.display_data,
+            # resizable=True,
+            height='300px',
+            # style={'height': '50vh'},
+        )
+        return rx.box(_element, max_height="50vh", overflow='auto')
+    
+    # @property
+    # def ag_grid_element(self):
+    #     grid = AgGrid.create(
+    #         columnDefs=self.column_defs,
+    #         rowData=self.display_data,
+    #     )
+    #     return rx.box(grid, class_name='style-reset')
+
+
+class Embeddings(Stateful):
+    
+    @state_var(cached=True)
+    def embeddings(self) -> pd.DataFrame:
+        calculate_embeddings = NotImplemented
+        res = self.data
+        res['embed_x','embed_y'] = calculate_embeddings(res['CASE_SUMY_X'])
+        return self.data
+
+
 class Constellation(Stateful):
     
     def __init__(self, name):
@@ -58,114 +154,3 @@ class WordFreqBar(Stateful):
         )
         
         return rx.plotly(data=fig, height='35vh')
-
-
-class Filters(Stateful):
-    
-    def __init__(self, name, filter_objs, table):
-        self.name = name
-        self.table = table
-        self.filter_objs = filter_objs
-    
-    @state
-    # really want to be able to add @rx.cached_var here but can't - can't use await self.get_state within @rx.cached_var
-    def query_args(self) -> Dict[str, List[str]]:
-        return {}
-    
-    @state_var(cached=True)
-    def data(self) -> pd.DataFrame:
-        print("SQL:", self.table.get_sql(**self.query_args, limit=10))
-        return self.table.query(**self.query_args, limit=10)#, select=[''])
-    
-    @state_var(cached=True)
-    def display_data(self) -> List[List[Any]]:
-        res = self.data
-        if len(res) > 5:
-            res = res.sample(5)
-        for col in self.display_columns:
-            res[col] = res[col].astype(str)
-        res = res[self.display_columns].values.tolist() #if using glide grid
-        # res = res[self.display_columns].to_dict(orient='records') #if using ag grid
-        return res
-    
-    @property
-    def display_columns(self):
-        return ['CASE_RECV_S', 'CASE_SUMY_X', 'State', 'case_sumy_length']
-    
-    @handler
-    async def update_query_args(self):
-        states = [await self.get_state(filter_obj.State) for filter_obj in self.filter_objs]
-        res = {}
-        for state in states:
-            for k, v in state.query_args.items():
-                res[k] = res.get(k, []) + v
-        self.query_args = res
-    
-    @property
-    def element(self):
-        button = rx.button(
-            rx.icon(tag='play'),
-            "Update Data",
-            on_click=self.update_query_args,
-            variant="outline",
-            color="green",
-        )
-        return rx.vstack(
-            self.table_element,
-            button,
-        )
-
-    @property
-    def column_defs(self) -> List[Dict[str, Any]]:
-        res = []
-        for col in self.display_columns:
-            # res0 = {'title': col} #for glide
-            # res0 = {'field': col, 'headerName': col} #for ag grid
-            res0 = {'name': col, 'sort':True} #for base rx.data_table
-            if col in 'CASE_SUMY_X':
-                res0['width'] = 800
-            res.append(res0)
-        return res
-    
-    # @property
-    # def grid_element(self):
-    #     # glide grid
-    #     return rx.data_editor.create(
-    #         columns=self.column_defs,
-    #         data=self.display_data,
-    #         # on_cell_clicked=self.click_cell,
-    #         get_cell_for_selection=True,
-    #         row_height=50,
-    #         allowWrapping=True,
-    #     )
-        
-    @property
-    def table_element(self):
-        _element = rx.data_table(
-            columns=self.column_defs,
-            data=self.display_data,
-            # resizable=True,
-            height='300px',
-            # style={'height': '50vh'},
-        )
-        return rx.box(_element, max_height="50vh", overflow='auto')
-    
-    # @property
-    # def ag_grid_element(self):
-    #     grid = AgGrid.create(
-    #         columnDefs=self.column_defs,
-    #         rowData=self.display_data,
-    #     )
-    #     return rx.box(grid, class_name='style-reset')
-
-
-
-class Embeddings(Stateful):
-    
-    @state_var(cached=True)
-    def embeddings(self) -> pd.DataFrame:
-        calculate_embeddings = NotImplemented
-        res = self.data
-        res['embed_x','embed_y'] = calculate_embeddings(res['CASE_SUMY_X'])
-        return self.data
-

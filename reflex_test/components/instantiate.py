@@ -1,5 +1,5 @@
 from .filters import DropdownComponent, TagInputComponent,  DatePickerComponent
-from .outputs import Constellation, WordFreqBar, Filters
+from .outputs import Constellation, WordFreqBar, DisplayTable
 from ..data_model.load_data import load_data, num_cols, date_col, cat_cols
 from ..core.sqlite import SQLTable
 
@@ -30,5 +30,5 @@ date_picker_max = DatePickerComponent('date_picker_max', column_name='CASE_RECV_
 
 all_filters = list(dropdowns.values()) + [taginput_and, taginput_or, taginput_not, date_picker_min, date_picker_max]
 
-filters = Filters('filters', filter_objs=all_filters, table=table)
+filters = DisplayTable('filters', filter_objs=all_filters, table=table)
 
