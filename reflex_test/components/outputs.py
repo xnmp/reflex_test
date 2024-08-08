@@ -51,11 +51,9 @@ class DisplayTable(Stateful):
     @property
     def element(self):
         button = rx.button(
-            rx.icon(tag='play'),
-            "Update Data",
+            rx.icon(tag='play'), "Update Data",
             on_click=self.update_query_args,
-            variant="outline",
-            color="green",
+            variant="outline", color="green",
         )
         return rx.vstack(
             self.table_element,
@@ -78,8 +76,6 @@ class DisplayTable(Stateful):
             columns=self.column_defs,
             data=self.display_data,
             # resizable=True,
-            height='300px',
-            # style={'height': '50vh'},
         )
         return rx.box(_element, max_height="50vh", overflow='auto')
 
