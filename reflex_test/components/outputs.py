@@ -10,7 +10,7 @@ from typing import List, Dict, Any
 
 class DisplayTable(Stateful):
     
-    def __init__(self, name, filter_objs, table):
+    def __init__(self, name, filter_objs, table, downstream_handlers=[]):
         self.name = name
         self.table = table
         self.filter_objs = filter_objs
@@ -21,23 +21,19 @@ class DisplayTable(Stateful):
         return {}
     
     @state_var(cached=True)
-    def data(self) -> pd.DataFrame:
+    def _data(self) -> pd.DataFrame:
         print("SQL:", self.table.get_sql(**self.query_args, limit=10))
         return self.table.query(**self.query_args, limit=10)#, select=[''])
     
     @state_var(cached=True)
     def display_data(self) -> List[List[Any]]:
-        res = self.data
+        res = self._data
         if len(res) > 5:
             res = res.sample(5)
         for col in self.display_columns:
             res[col] = res[col].astype(str)
         res = res[self.display_columns].values.tolist()
         return res
-    
-    @property
-    def display_columns(self):
-        return ['CASE_RECV_S', 'CASE_SUMY_X', 'State', 'case_sumy_length']
     
     @handler
     async def update_query_args(self):
@@ -49,17 +45,9 @@ class DisplayTable(Stateful):
         self.query_args = res
     
     @property
-    def element(self):
-        button = rx.button(
-            rx.icon(tag='play'), "Update Data",
-            on_click=self.update_query_args,
-            variant="outline", color="green",
-        )
-        return rx.vstack(
-            self.table_element,
-            button,
-        )
-
+    def display_columns(self):
+        return ['CASE_RECV_S', 'CASE_SUMY_X', 'State', 'case_sumy_length']
+    
     @property
     def column_defs(self) -> List[Dict[str, Any]]:
         res = []
@@ -69,6 +57,18 @@ class DisplayTable(Stateful):
                 res0['width'] = 800
             res.append(res0)
         return res
+    
+    @property
+    def element(self):
+        button = rx.button(
+            rx.icon(tag='play'), "Update Data",
+            on_click=[self.update_query_args],
+            variant="outline", color="green",
+        )
+        return rx.vstack(
+            self.table_element,
+            button,
+        )
     
     @property
     def table_element(self):
@@ -110,7 +110,7 @@ class Constellation(Stateful):
     
     @property
     def element(self):
-        return rx.plotly(data=self.fig, height='35vh')
+        return rx.plotly(data=self.fig, height='40vh')
 
 
 class WordFreqBar(Stateful):
@@ -139,4 +139,4 @@ class WordFreqBar(Stateful):
             
         )
         
-        return rx.plotly(data=fig, height='35vh')
+        return rx.plotly(data=fig, height='40vh')

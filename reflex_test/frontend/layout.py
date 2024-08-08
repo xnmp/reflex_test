@@ -1,7 +1,6 @@
 import reflex as rx
 
-from ..components.instantiate import dropdowns, taginput_and, taginput_or, taginput_not,date_picker_min, date_picker_max
-from ..components.instantiate import filters, constellation, word_freq_bar
+from ..components.instantiate import *
 
 
 def accordion() -> rx.Component:
@@ -84,7 +83,7 @@ def lhs_sidebar() -> rx.Component:
 def rhs() -> rx.Component:
     return rx.vstack(
         rx.hstack(constellation.element, word_freq_bar.element, spacing="5"),
-        filters.element,
+        display_table.element,
         spacing="5",
         justify="center",
         max_height="95vh",

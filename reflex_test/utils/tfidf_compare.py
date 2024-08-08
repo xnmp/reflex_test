@@ -9,7 +9,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.base import TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer
 
-from utils.helpers import maybe_sample
+from ..utils.helpers import maybe_sample
 
 
 class StandoutWordFinder(TransformerMixin):

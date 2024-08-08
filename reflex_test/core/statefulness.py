@@ -3,6 +3,7 @@ from typing import List, Any
 from copy import copy
 import random
 import string
+import types
 
 from ..utils.hasher import Hasher
 # this is all actually already pre-made with rx.ComponentState
@@ -41,7 +42,7 @@ def get_stateful_name(stateful_obj):
     
     # IMPORTANT: the state_id must be a deterministic function of the class name - if it's different when compiling vs when running then Reflex will break
     state_id = Hasher.generate(stateful_obj.__class__.__name__ + stateful_obj.name)
-    state_class_name = 'State' + state_id
+    state_class_name = stateful_obj.name + 'State' + state_id
     return state_class_name
 
 
@@ -63,8 +64,10 @@ def modify_state_attrs(state_attrs, stateful_cls_instance):
         elif hasattr(attr_value, '_is_state_var') and attr_value._cached:
             # res[attr_name] = rx.var(cached=attr_value._cached)(attr_value)
             res[attr_name] = rx.cached_var(attr_value)
+            # res[attr_name].get_full_name = types.MethodType(lambda self: self._var_data.state, res[attr_name])
         elif hasattr(attr_value, '_is_state_var') and not attr_value._cached:
             res[attr_name] = rx.var(attr_value)
+            # res[attr_name].get_full_name = types.MethodType(lambda self: self._var_data.state, res[attr_name])
     return res
 
 
@@ -83,7 +86,7 @@ class StatefulMeta(type):
     allstates = {}
     
     def __new__(meta_cls, stateful_cls_name, bases, stateful_cls_attrs):
-
+        
         state_attrs = get_state_attrs(stateful_cls_attrs)
         original_init = stateful_cls_attrs.get('__init__', bases[0].__original_init__ if bases else lambda x: None)
         
@@ -120,4 +123,14 @@ class Stateful(metaclass=StatefulMeta):
             setattr(self.State, name, value)
         else:
             super().__setattr__(name, value)
-
+    
+    def get_full_name(self):
+        return self.State.get_full_name()
+    
+    def add_deps(self, *deps, **kwargs):
+        for kw, func in kwargs.items():
+            setattr(self, kw, func)
+        if not hasattr(self, 'deps'):
+            self.deps = []
+        for dep in deps:
+            self.deps.append(dep)
