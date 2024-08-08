@@ -1,5 +1,5 @@
-from ..components.filters import DropdownComponent, TagInputComponent,  DatePickerComponent
-from ..components.outputs import Constellation, WordFreqBar, Filters
+from .filters import DropdownComponent, TagInputComponent,  DatePickerComponent
+from .outputs import Constellation, WordFreqBar, Filters
 from ..data_model.load_data import load_data, num_cols, date_col, cat_cols
 from ..core.sqlite import SQLTable
 

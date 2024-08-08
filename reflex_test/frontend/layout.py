@@ -1,6 +1,7 @@
 import reflex as rx
 
-from .instantiate import dropdowns, taginput_and, taginput_or, taginput_not,date_picker_min, date_picker_max
+from ..components.instantiate import dropdowns, taginput_and, taginput_or, taginput_not,date_picker_min, date_picker_max
+from ..components.instantiate import filters, constellation, word_freq_bar
 
 
 def accordion() -> rx.Component:
@@ -40,7 +41,7 @@ def accordion() -> rx.Component:
     )
 
 
-def sidebar() -> rx.Component:
+def lhs_sidebar() -> rx.Component:
     
     logo = rx.image(
         src="/logo.jpg",
@@ -77,4 +78,14 @@ def sidebar() -> rx.Component:
             # height="650px",
             width="15vw",
         ),
+    )
+
+
+def rhs() -> rx.Component:
+    return rx.vstack(
+        rx.hstack(constellation.element, word_freq_bar.element, spacing="5"),
+        filters.element,
+        spacing="5",
+        justify="center",
+        max_height="95vh",
     )
