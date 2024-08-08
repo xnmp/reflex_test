@@ -89,3 +89,7 @@ def rhs() -> rx.Component:
         justify="center",
         max_height="95vh",
     )
+
+
+def index() -> rx.Component:
+    return rx.hstack(lhs_sidebar(), rhs())
