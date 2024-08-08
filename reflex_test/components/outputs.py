@@ -33,7 +33,6 @@ class DisplayTable(Stateful):
         for col in self.display_columns:
             res[col] = res[col].astype(str)
         res = res[self.display_columns].values.tolist()
-        # res = res[self.display_columns].to_dict(orient='records') #if using ag grid
         return res
     
     @property
@@ -67,7 +66,6 @@ class DisplayTable(Stateful):
     def column_defs(self) -> List[Dict[str, Any]]:
         res = []
         for col in self.display_columns:
-            # res0 = {'field': col, 'headerName': col} #for ag grid
             res0 = {'name': col, 'sort':True} #for base rx.data_table
             if col in 'CASE_SUMY_X':
                 res0['width'] = 800
@@ -84,14 +82,6 @@ class DisplayTable(Stateful):
             # style={'height': '50vh'},
         )
         return rx.box(_element, max_height="50vh", overflow='auto')
-    
-    # @property
-    # def ag_grid_element(self):
-    #     grid = AgGrid.create(
-    #         columnDefs=self.column_defs,
-    #         rowData=self.display_data,
-    #     )
-    #     return rx.box(grid, class_name='style-reset')
 
 
 class Embeddings(Stateful):
