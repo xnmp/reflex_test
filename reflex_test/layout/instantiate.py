@@ -1,4 +1,5 @@
-from ..components.filters import Dropdown, Filters, TagInputComponent, DateRangeComponent, DatePickerComponent, Constellation, WordFreqBar
+from ..components.filters import DropdownComponent, TagInputComponent,  DatePickerComponent
+from ..components.outputs import Constellation, WordFreqBar, Filters
 from ..data_model.load_data import load_data, num_cols, date_col, cat_cols
 from ..core.sqlite import SQLTable
 
@@ -16,7 +17,7 @@ options_dict = {
     for col in cat_cols
 }
 
-dropdowns = {name: Dropdown(name, options=options) for name, options in options_dict.items()}
+dropdowns = {name: DropdownComponent(name, options=options) for name, options in options_dict.items()}
 taginput_and = TagInputComponent('tag_and', and_or='AND')
 taginput_or = TagInputComponent('tag_or', and_or='OR')
 taginput_not = TagInputComponent('tag_not', and_or='NOT')

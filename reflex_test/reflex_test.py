@@ -13,7 +13,7 @@ from .style import style
 def rhs() -> rx.Component:
     return rx.vstack(
         rx.hstack(constellation.element, word_freq_bar.element, spacing="5"),
-        rx.vstack(filters.element, max_height="50vh"),
+        filters.element,
         spacing="5",
         justify="center",
         max_height="95vh",
