@@ -134,3 +134,18 @@ class Stateful(metaclass=StatefulMeta):
             self.deps = []
         for dep in deps:
             self.deps.append(dep)
+    
+    def add_sources(self, **sources):
+        if not hasattr(self, 'sources'):
+            self.sources = {}
+        self.sources.update(sources)
+        return self
+    
+    # @handler
+    # async def get_source(self, source_name):
+    #     if source_name in self.sources:
+    #         source = self.sources[source_name]
+    #         res = await self.get_state(source['state'].State)
+    #         return source['transform'](res)
+    #     else:
+    #         raise AttributeError(f"Source {source_name} not found")

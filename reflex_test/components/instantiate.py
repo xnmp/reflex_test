@@ -31,4 +31,7 @@ all_filters = list(dropdowns.values()) + [taginput_and, taginput_or, taginput_no
 display_table = DisplayTable('display_table', filter_objs=all_filters, table=table)
 
 constellation = Constellation('constellation')
-word_freq_bar = WordFreqBar('word_freq_bar', base_series=df['case_sumy_x_cleaned'], source_data=display_table)#.add_deps(display_table, source=lambda x: x.deps['display_table']._data['case_sumy_x_cleaned']))
+word_freq_bar = WordFreqBar('word_freq_bar', base_series=df['case_sumy_x_cleaned'], source_data=display_table)
+# .add_sources(
+#     data={'state': display_table, 'transform': lambda x: x._data['case_sumy_x_cleaned']}
+# )

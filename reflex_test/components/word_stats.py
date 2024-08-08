@@ -18,6 +18,7 @@ class WordFreqBar(Stateful):
     # unfortunately, we can't set source_data = source_data._data['case_sumy_x_cleaned'] when we initialize
     # so we need to do this in the update_fig handler
     async def update_fig(self):
+        # text_series = await self.get_source('data')
         text_series = (await self.get_state(self.source_data.State))._data['case_sumy_x_cleaned']
         self.fig = self.calculate_fig(text_series)
         
