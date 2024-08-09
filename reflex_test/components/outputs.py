@@ -8,9 +8,9 @@ import plotly
 from typing import List, Dict, Any
 
 
-class DisplayTable(Stateful):
+class CoreState(Stateful):
     
-    def __init__(self, name, filter_objs, table, downstream_handlers=[]):
+    def __init__(self, name, filter_objs, table):
         self.name = name
         self.table = table
         self.filter_objs = filter_objs
@@ -27,6 +27,7 @@ class DisplayTable(Stateful):
     
     @state_var(cached=True)
     def display_data(self) -> List[List[Any]]:
+        # return [[]]
         res = self._data
         if len(res) > 5:
             res = res.sample(5)
@@ -36,13 +37,44 @@ class DisplayTable(Stateful):
         return res
     
     @handler
-    async def update_query_args(self):
+    async def update(self):
         states = [await self.get_state(filter_obj.State) for filter_obj in self.filter_objs]
         res = {}
         for state in states:
             for k, v in state.query_args.items():
                 res[k] = res.get(k, []) + v
         self.query_args = res
+        
+    
+    @property
+    def element(self):
+        button = rx.button(
+            rx.icon(tag='play'), "Update Data",
+            on_click=self.update_all,
+            variant="outline", color="green",
+        )
+        return button
+    
+    
+    @property
+    def display_columns(self):
+        return ['CASE_RECV_S', 'CASE_SUMY_X', 'State', 'case_sumy_length']
+
+
+class DisplayTable(Stateful):
+    
+    @state
+    def display_data(self) -> List[List[Any]]:
+        return [[]]
+    
+    @handler
+    async def update(self):
+        res = await self.get_source('data')
+        if len(res) > 5:
+            res = res.sample(5)
+        for col in self.display_columns:
+            res[col] = res[col].astype(str)
+        self.display_data = res[self.display_columns].values.tolist()
     
     @property
     def display_columns(self):
@@ -60,18 +92,6 @@ class DisplayTable(Stateful):
     
     @property
     def element(self):
-        button = rx.button(
-            rx.icon(tag='play'), "Update Data",
-            on_click=[self.update_query_args],
-            variant="outline", color="green",
-        )
-        return rx.vstack(
-            self.table_element,
-            button,
-        )
-    
-    @property
-    def table_element(self):
         _element = rx.data_table(
             columns=self.column_defs,
             data=self.display_data,

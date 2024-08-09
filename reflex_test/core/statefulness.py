@@ -122,6 +122,8 @@ class StatefulMeta(type):
 
 class Stateful(metaclass=StatefulMeta):
     
+    # handlers = []
+    
     def __init__(self, name):
         self.name = name
 
@@ -155,11 +157,32 @@ class Stateful(metaclass=StatefulMeta):
         self.sources.update(sources)
         return self
     
+    def add_handlers(self, *handlers):
+        """
+        handlers can be Stateful objects (in which case its update method will be called), or handler functions, either async or not
+        """
+        if not hasattr(self, 'handlers'):
+            self.handlers = []
+        self.handlers.extend(handlers)
+    
     @handler
     async def get_source(self, source_name):
         if source_name in self.sources:
             source = self.sources[source_name]
+            if isinstance(source, Stateful):
+                return await self.get_state(source.State)
             res = await self.get_state(source['state'].State)
             return source['transform'](res)
         else:
             raise AttributeError(f"Source {source_name} not found")
+    
+    @property
+    def update_all(self):
+        res = [self.update]
+        if hasattr(self, 'handlers'):
+            for handler in self.handlers:
+                if isinstance(handler, Stateful):
+                    res += handler.update_all
+                else:
+                    res.append(handler)
+        return res

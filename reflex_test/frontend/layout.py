@@ -88,6 +88,7 @@ def rhs() -> rx.Component:
             spacing="5", width="100%"
         ),
         display_table.element,
+        core_state.element,
         spacing="5",
         justify="center",
         max_height="95vh",

@@ -1,5 +1,5 @@
 from .filters import DropdownComponent, TagInputComponent,  DatePickerComponent
-from .outputs import Constellation, DisplayTable
+from .outputs import Constellation, DisplayTable, CoreState
 from .word_stats import WordFreqBar
 from ..data_model.load_data import load_data, num_cols, date_col, cat_cols
 from ..core.sqlite import SQLTable
@@ -28,9 +28,17 @@ date_picker_max = DatePickerComponent('date_picker_max', column_name='CASE_RECV_
 
 all_filters = list(dropdowns.values()) + [taginput_and, taginput_or, taginput_not, date_picker_min, date_picker_max]
 
-display_table = DisplayTable('display_table', filter_objs=all_filters, table=table)
+core_state = CoreState('core_state', filter_objs=all_filters, table=table)
+display_table = DisplayTable('display_table').add_sources(
+    data={'state': core_state, 'transform': lambda x: x._data}
+)
+
+
 
 constellation = Constellation('constellation')
 word_freq_bar = WordFreqBar('word_freq_bar', base_series=df['case_sumy_x_cleaned']).add_sources(
-    data={'state': display_table, 'transform': lambda x: x._data['case_sumy_x_cleaned']}
+    data={'state': core_state, 'transform': lambda x: x._data['case_sumy_x_cleaned']}
 )
+
+
+core_state.add_handlers(display_table, word_freq_bar)

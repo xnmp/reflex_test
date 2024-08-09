@@ -15,18 +15,15 @@ class WordFreqBar(Stateful):
         return plotly.graph_objects.Figure()
     
     @handler
-    # unfortunately, we can't set source_data = source_data._data['case_sumy_x_cleaned'] when we initialize
-    # so we need to do this in the update_fig handler
-    async def update_fig(self):
+    async def update(self):
         text_series = await self.get_source('data')
-        # text_series = (await self.get_state(self.source_data.State))._data['case_sumy_x_cleaned']
         self.fig = self.calculate_fig(text_series)
         
     @property
     def element(self):
         button = rx.button(
             rx.icon(tag='play'), "Update Graph",
-            on_click=[self.update_fig],
+            on_click=[self.update],
             variant="outline", color="green",
         )
         return rx.vstack(rx.plotly(data=self.fig, ), button, width='45%', height='40vh', overflow='auto')
