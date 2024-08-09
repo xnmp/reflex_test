@@ -33,12 +33,8 @@ display_table = DisplayTable('display_table').add_sources(
     data={'state': core_state, 'transform': lambda x: x._data}
 )
 
-
-
 constellation = Constellation('constellation')
 word_freq_bar = WordFreqBar('word_freq_bar', base_series=df['case_sumy_x_cleaned']).add_sources(
     data={'state': core_state, 'transform': lambda x: x._data['case_sumy_x_cleaned']}
 )
 
-
-core_state.add_handlers(display_table, word_freq_bar)

@@ -1,6 +1,8 @@
 import reflex as rx
 from typing import List, Any
 from copy import copy
+from ordered_set import OrderedSet
+
 import random
 import string
 import types
@@ -107,6 +109,8 @@ class StatefulMeta(type):
         def new_init(stateful_cls_instance, *args, **kwargs):
             
             original_init(stateful_cls_instance, *args, **kwargs)
+            stateful_cls_instance.handlers = []
+            stateful_cls_instance.sources = {}
             state_attrs2 = modify_state_attrs(state_attrs, stateful_cls_instance)
             
             stateful_cls_instance.State = type(get_stateful_name(stateful_cls_instance), (StateWithStateful,), state_attrs2)
@@ -152,8 +156,11 @@ class Stateful(metaclass=StatefulMeta):
             self.deps.append(dep)
     
     def add_sources(self, **sources):
-        if not hasattr(self, 'sources'):
-            self.sources = {}
+        for source in sources.values():
+            if isinstance(source, Stateful):
+                source.add_handlers(self)
+            elif isinstance(source, dict):
+                source['state'].add_handlers(self)
         self.sources.update(sources)
         return self
     
@@ -161,9 +168,9 @@ class Stateful(metaclass=StatefulMeta):
         """
         handlers can be Stateful objects (in which case its update method will be called), or handler functions, either async or not
         """
-        if not hasattr(self, 'handlers'):
-            self.handlers = []
-        self.handlers.extend(handlers)
+        for handler in handlers:
+            if handler not in self.handlers:
+                self.handlers.append(handler)
     
     @handler
     async def get_source(self, source_name):
@@ -171,8 +178,10 @@ class Stateful(metaclass=StatefulMeta):
             source = self.sources[source_name]
             if isinstance(source, Stateful):
                 return await self.get_state(source.State)
-            res = await self.get_state(source['state'].State)
-            return source['transform'](res)
+            else:
+                source['state'].add_handlers(self)
+                res = await self.get_state(source['state'].State)
+                return source['transform'](res)
         else:
             raise AttributeError(f"Source {source_name} not found")
     

@@ -21,12 +21,7 @@ class WordFreqBar(Stateful):
         
     @property
     def element(self):
-        button = rx.button(
-            rx.icon(tag='play'), "Update Graph",
-            on_click=[self.update],
-            variant="outline", color="green",
-        )
-        return rx.vstack(rx.plotly(data=self.fig, ), button, width='45%', height='40vh', overflow='auto')
+        return rx.vstack(rx.plotly(data=self.fig), width='45%', height='40vh', overflow='auto')
 
     def __init__(self, name='word_freq_bar', 
                  base_series=None, 
