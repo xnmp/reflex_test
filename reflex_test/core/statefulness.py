@@ -71,13 +71,27 @@ def modify_state_attrs(state_attrs, stateful_cls_instance):
     return res
 
 
-def get_state_attrs(stateful_cls_attrs):
+def get_state_attrs(bases, stateful_cls_attrs):
     state_attrs = {}
+    
+    def is_state_attr(attr):
+        return (isinstance(attr, property) and hasattr(attr.fget, '_is_state')) or \
+               hasattr(attr, '_is_handler') or hasattr(attr, '_is_state_var')
+    
+    # Collect state attributes from all base classes, in reverse order
+    for base in reversed(bases):
+        for cls in reversed(base.__mro__):
+            if cls is object:
+                continue
+            for attr_name, attr_value in cls.__dict__.items():
+                if is_state_attr(attr_value):
+                    state_attrs[attr_name] = attr_value
+    
+    # Add attributes from the current class, potentially overriding inherited ones
     for attr_name, attr_value in stateful_cls_attrs.items():
-        if isinstance(attr_value, property) and hasattr(attr_value.fget, '_is_state'):
+        if is_state_attr(attr_value):
             state_attrs[attr_name] = attr_value
-        elif hasattr(attr_value, '_is_handler') or hasattr(attr_value, '_is_state_var'):
-            state_attrs[attr_name] = attr_value
+    
     return state_attrs
 
 
@@ -87,7 +101,7 @@ class StatefulMeta(type):
     
     def __new__(meta_cls, stateful_cls_name, bases, stateful_cls_attrs):
         
-        state_attrs = get_state_attrs(stateful_cls_attrs)
+        state_attrs = get_state_attrs(bases, stateful_cls_attrs)
         original_init = stateful_cls_attrs.get('__init__', bases[0].__original_init__ if bases else lambda x: None)
         
         def new_init(stateful_cls_instance, *args, **kwargs):
@@ -141,11 +155,11 @@ class Stateful(metaclass=StatefulMeta):
         self.sources.update(sources)
         return self
     
-    # @handler
-    # async def get_source(self, source_name):
-    #     if source_name in self.sources:
-    #         source = self.sources[source_name]
-    #         res = await self.get_state(source['state'].State)
-    #         return source['transform'](res)
-    #     else:
-    #         raise AttributeError(f"Source {source_name} not found")
+    @handler
+    async def get_source(self, source_name):
+        if source_name in self.sources:
+            source = self.sources[source_name]
+            res = await self.get_state(source['state'].State)
+            return source['transform'](res)
+        else:
+            raise AttributeError(f"Source {source_name} not found")

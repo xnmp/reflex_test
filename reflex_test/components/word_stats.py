@@ -18,8 +18,8 @@ class WordFreqBar(Stateful):
     # unfortunately, we can't set source_data = source_data._data['case_sumy_x_cleaned'] when we initialize
     # so we need to do this in the update_fig handler
     async def update_fig(self):
-        # text_series = await self.get_source('data')
-        text_series = (await self.get_state(self.source_data.State))._data['case_sumy_x_cleaned']
+        text_series = await self.get_source('data')
+        # text_series = (await self.get_state(self.source_data.State))._data['case_sumy_x_cleaned']
         self.fig = self.calculate_fig(text_series)
         
     @property
@@ -29,16 +29,13 @@ class WordFreqBar(Stateful):
             on_click=[self.update_fig],
             variant="outline", color="green",
         )
-        return rx.vstack(rx.plotly(data=self.fig), button, height='40vh')
+        return rx.vstack(rx.plotly(data=self.fig, ), button, width='45%', height='40vh', overflow='auto')
 
     def __init__(self, name='word_freq_bar', 
-                 base_series=None, source_data=None,
+                 base_series=None, 
                  n_records=25, x_label='prominence', kind='tf', 
                  max_fit=5000, 
                  tf_threshold=None, title_name="default", colored=False):
-        if source_data is None:
-            raise AttributeError("WordFreqBar must be initialized with a source_data")
-        self.source_data = source_data
         self.name = name
         self.n_records = n_records
         self.x_label = x_label

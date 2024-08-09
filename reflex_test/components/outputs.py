@@ -110,33 +110,6 @@ class Constellation(Stateful):
     
     @property
     def element(self):
-        return rx.plotly(data=self.fig, height='40vh')
+        return rx.plotly(data=self.fig, height='40vh', width='55%')
 
 
-class WordFreqBar(Stateful):
-    
-    @state
-    def words(self) -> pd.DataFrame:
-        return pd.DataFrame()
-    
-    @property
-    def element(self):
-        data = {
-            'Category': ['A', 'B', 'C', 'D', 'E'],
-            'Values': [20, 14, 23, 25, 22]
-        }
-        df = pd.DataFrame(data)
-
-        # Create the bar chart using Plotly Express
-        fig = px.bar(
-            df, 
-            x='Category', 
-            y='Values', 
-            title='Sample Bar Chart',
-            labels={'Values': 'Count'},
-            color='Category',
-            color_continuous_scale=px.colors.sequential.Viridis,
-            
-        )
-        
-        return rx.plotly(data=fig, height='40vh')

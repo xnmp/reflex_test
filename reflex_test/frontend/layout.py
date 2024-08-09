@@ -75,14 +75,18 @@ def lhs_sidebar() -> rx.Component:
             align="start",
             height="100vh",
             # height="650px",
-            width="15vw",
+            width="17vw",
         ),
     )
 
 
 def rhs() -> rx.Component:
     return rx.vstack(
-        rx.hstack(constellation.element, word_freq_bar.element, spacing="5"),
+        rx.hstack(
+            constellation.element,#, height='40vh', width='60%'), 
+            word_freq_bar.element, 
+            spacing="5", width="100%"
+        ),
         display_table.element,
         spacing="5",
         justify="center",
