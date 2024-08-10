@@ -21,21 +21,13 @@ from daal4py.sklearn.cluster import DBSCAN
 # from umap import UMAP
 
 
-plot_embedder = make_pipeline(
-    TfidfVectorizer(analyzer='word', ngram_range=(1,2), max_features=2000),
-    # EncodeTransformer(),
-    TruncatedSVD(n_components=50, random_state=42),
-    TSNE(perplexity=30, initialization='pca', random_state=42), #metric='cosine'
-    # PaCMAP(n_components=2, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0)
-)
+def default_embedder():
+    return make_pipeline(
+        TfidfVectorizer(analyzer='word', ngram_range=(1,2), max_features=2000),
+        # EncodeTransformer(),
+        TruncatedSVD(n_components=50, random_state=42),
+        TSNE(perplexity=30, initialization='pca', random_state=42), #metric='cosine'
+        # UMAP(metric='cosine', n_components=10),
+        # PaCMAP(n_components=2, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0)
+    )
 
-# semantic_embedder = plot_embedder
-
-semantic_embedder = make_pipeline(
-    # EncodeTransformer(),
-    TfidfVectorizer(analyzer='word', ngram_range=(1,2), max_features=2000),
-    TruncatedSVD(n_components=50, random_state=42),
-    TSNE(perplexity=30, n_components=10, initialization='pca', random_state=42),
-    # UMAP(metric='cosine', n_components=10),
-    # PaCMAP(n_components=15, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0)
-)

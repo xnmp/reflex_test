@@ -1,15 +1,17 @@
+import networkx as nx
 from copy import copy
 import numpy as np
 import plotly.express as px
 
-from utils.clustering import group_means
+from .clustering import group_means
+
 
 def make_constellation(plotdata, hover_cols=['cluster_name','root_cause_hover','CASE_SUMY_X_hover'], 
               x='embed_x', y='embed_y', color_col='color',
               text_col='CASE_SUMY_X_cleaned', cluster_col='cluster',
               tfidf=None,
               width=800, height=800):
-
+    
     plotdata = copy(plotdata)
 
     for col in hover_cols:
@@ -49,7 +51,6 @@ def make_constellation(plotdata, hover_cols=['cluster_name','root_cause_hover','
 
 
 def annotate_graph(fig, plotdata, cluster_col, text_col, tfidf=None, top_n=2):
-    import networkx as nx
 
     tfidfs0 = tfidf.transform(plotdata[text_col])
     top_tfidfs = group_means(tfidfs0, 

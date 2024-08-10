@@ -39,7 +39,6 @@ class WordFreqBar(Stateful):
         self.title_name = title_name
         self.is_colored = colored
     
-    # @session_property
     @cached_property
     def word_finder(self):
         from ..utils.tfidf_compare import StandoutWordFinder

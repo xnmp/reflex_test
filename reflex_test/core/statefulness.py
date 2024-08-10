@@ -155,12 +155,13 @@ class Stateful(metaclass=StatefulMeta):
         for dep in deps:
             self.deps.append(dep)
     
-    def add_sources(self, **sources):
-        for source in sources.values():
-            if isinstance(source, Stateful):
-                source.add_handlers(self)
-            elif isinstance(source, dict):
-                source['state'].add_handlers(self)
+    def add_sources(self, add_handler=True,**sources):
+        if add_handler:
+            for source in sources.values():
+                if isinstance(source, Stateful):
+                    source.add_handlers(self)
+                elif isinstance(source, dict):
+                    source['state'].add_handlers(self)
         self.sources.update(sources)
         return self
     
@@ -195,3 +196,6 @@ class Stateful(metaclass=StatefulMeta):
                 else:
                     res.append(handler)
         return res
+    
+    def apply(self, transform):
+        return {'state': self, 'transform': transform}
